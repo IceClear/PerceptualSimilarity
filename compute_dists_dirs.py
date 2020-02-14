@@ -2,10 +2,11 @@ import argparse
 import os
 import models
 from util import util
+import numpy as np
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('-d0','--dir0', type=str, default='./imgs/ex_dir0')
-parser.add_argument('-d1','--dir1', type=str, default='./imgs/ex_dir1')
+parser.add_argument('-d0','--dir0', type=str, default='/home/iceclear/Video-compression/SVEGAN/results/test_32_nb3')
+parser.add_argument('-d1','--dir1', type=str, default='/home/iceclear/Video-compression/SVEGAN/results/test_gt')
 parser.add_argument('-o','--out', type=str, default='./imgs/example_dists.txt')
 parser.add_argument('--use_gpu', action='store_true', help='turn on flag to use GPU')
 
@@ -17,7 +18,7 @@ model = models.PerceptualLoss(model='net-lin',net='alex',use_gpu=opt.use_gpu)
 # crawl directories
 f = open(opt.out,'w')
 files = os.listdir(opt.dir0)
-
+score_list = []
 for file in files:
 	if(os.path.exists(os.path.join(opt.dir1,file))):
 		# Load images
@@ -30,7 +31,12 @@ for file in files:
 
 		# Compute distance
 		dist01 = model.forward(img0,img1)
+		score_list.append(dist01.detach().numpy())
 		print('%s: %.3f'%(file,dist01))
 		f.writelines('%s: %.6f\n'%(file,dist01))
+
+score_list = np.array(score_list)
+average_score = np.mean(score_list)
+print('\nFinal average score:%.3f'%(average_score))
 
 f.close()
